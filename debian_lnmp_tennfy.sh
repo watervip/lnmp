@@ -40,7 +40,7 @@ CSUCCESS="\033[32m"
 CWARNING="\033[1;33m"
 
 #Version
-MysqlVersion='mysql-5.5.49'
+MysqlVersion='mysql-5.5.56'
 PhpVersion='php-5.4.45'
 NginxVersion='nginx-1.12.1'
 
