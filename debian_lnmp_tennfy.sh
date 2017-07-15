@@ -1,6 +1,6 @@
 #!/bin/bash
 #===============================================================================================
-#   System Required:  Debian or Ubuntu (32bit/64bit)
+#   System Required:  debian or ubuntu (32bit/64bit)
 #   Description:  Install lnmp for Debian or Ubuntu
 #   Author: tennfy <admin@tennfy.com>
 #   Intro:  http://www.tennfy.com
@@ -8,7 +8,7 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 clear
 echo "#############################################################"
-echo "# Install lnmp for Debian or Ubuntu (32bit/64bit)"
+echo "# Install lnmp for debian or ubuntu (32bit/64bit)"
 echo "# Intro: http://www.tennfy.com"
 echo "#"
 echo "# Author: tennfy <admin@tennfy.com>"
@@ -17,15 +17,14 @@ echo "#############################################################"
 echo ""
 
 #Variables
-lnmpdir='/opt/lnmp'
-Ramthreshold='512'
+LnmpDir='/opt/lnmp'
 ZendOpcache=''
 Memcached=''
-php_version=''
 MysqlPass=''
 SysName=''
 SysBit=''
-Cpunum=''
+CpuNum=''
+RamThreshold='512'
 RamTotal=''
 RamSwap=''
 RamSum=''
@@ -41,9 +40,9 @@ CWARNING="\033[1;33m"
 #Version
 MysqlVersion='mysql-5.5.49'
 PhpVersion='php-5.4.45'
-NginxVersion='nginx-1.8.0'
+NginxVersion='nginx-1.12.1'
 
-
+    
 function CheckSystem()
 {
 	[ $(id -u) != '0' ] && echo '[Error] Please use root to install lnmp' && exit
@@ -57,8 +56,11 @@ function CheckSystem()
 	RamTotal=`free -m | grep 'Mem' | awk '{print $2}'`
 	RamSwap=`free -m | grep 'Swap' | awk '{print $2}'`
 	RamSum=$[$RamTotal+$RamSwap]
+	
 	echo '-----------------------------------------------------------------'
-	echo "${SysBit}Bit, ${Cpunum}*CPU, ${RamTotal}MB*RAM, ${RamSwap}MB*Swap"	
+	echo "${SysBit}Bit, ${Cpunum}*CPU, ${RamTotal}MB*RAM, ${RamSwap}MB*Swap"
+	echo '-----------------------------------------------------------------'
+	
 	if [ "$RamSum" -lt "$Ramthreshold" ]
 	then
 	    echo 'Script will install mysql and php by apt-get'
@@ -167,7 +169,7 @@ function InstallLibiconv()
 		rm -f libiconv-1.14.tar.gz
 	fi
 }
-function Installcurl()
+function InstallCurl()
 {
 	if [ ! -d /usr/local/curl ]
 	then
@@ -182,7 +184,7 @@ function Installcurl()
 		rm -f curl-7.46.0.tar.gz
 	fi
 }
-function Installlibmcrypt()
+function InstallLibmcrypt()
 {
 	if [ ! -d /usr/local/libmcrypt ]
 	then
@@ -197,7 +199,7 @@ function Installlibmcrypt()
 		rm -f libmcrypt-2.5.8.tar.gz
 	fi
 }
-function Installmhash()
+function InstallMhash()
 {
 	if [ ! -d /usr/local/mhash ]
 	then
@@ -212,7 +214,7 @@ function Installmhash()
 		rm -f mhash-0.9.9.9.tar.gz
 	fi
 }
-function Installmcrypt()
+function InstallMcrypt()
 {
 	if [ ! -d /usr/local/mcrypt ]
 	then	
@@ -231,7 +233,7 @@ function Installmcrypt()
 		rm -f mcrypt-2.6.8.tar.gz
 	fi
 }
-function remove_unneeded() 
+function RemoveUnneeded() 
 {
 	DEBIAN_FRONTEND=noninteractive apt-get -q -y remove --purge apache2* samba* bind9* nscd
 	invoke-rc.d saslauthd stop
@@ -246,7 +248,7 @@ function remove_unneeded()
 			apt-get install -y $packages --force-yes;apt-get -fy install;apt-get -y autoremove
 	done
 }
-function install_dotdeb() 
+function InstallDotdeb() 
 {
     if [ "$RamSum" -lt "$Ramthreshold" ]
 	then
@@ -260,7 +262,7 @@ function install_dotdeb()
 		apt-get update
 	fi
 }
-function downloadfiles()
+function DownloadFiles()
 {	
 	#download nginx
 	wget http://nginx.org/download/${NginxVersion}.tar.gz
@@ -282,7 +284,7 @@ function downloadfiles()
 	rm -r ngx_http_google_filter_module
 	rm -r ngx_http_substitutions_filter_module
 }
-function zendopcache()
+function InstallZendOpcache()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install zendopcache                    "
     echo "----------------------------------------------------------------" 
@@ -343,7 +345,7 @@ EOF
 	echo "                zendopcache install finished                  "
 	echo "--------------------------------------------------------------"
 }
-function memcached()
+function InstallMemcached()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install memcached                    "
     echo "----------------------------------------------------------------" 
@@ -408,7 +410,7 @@ function memcached()
 	echo "                memcached install finished                    "
 	echo "--------------------------------------------------------------"
 }
-function installmysql()
+function InstallMysql()
 {
     echo "----------------------------------------------------------------"
 	echo "                     begin to install mysql                     "
@@ -489,7 +491,7 @@ EOF
 	echo "                      mysql install finished                  "
 	echo "--------------------------------------------------------------"
 }
-function installphp(){
+function InstallPhp(){
     echo "--------------------------------------------------------------"
 	echo "                      begin to install php                    "
     echo "--------------------------------------------------------------"  
@@ -551,7 +553,7 @@ function installphp(){
 	echo "                    php install finished                       "
     echo "---------------------------------------------------------------"	
 }
-function installnginx(){
+function InstallNginx(){
     echo "---------------------------------------------------------------"
 	echo "                      begin to install nginx                   "
     echo "---------------------------------------------------------------"
@@ -563,7 +565,8 @@ function installnginx(){
 		make
 		make install
 		cd /root
-	# add conf.d dir
+		
+	#create conf.d directory
 	if [ ! -d /etc/nginx/conf.d ]
 	then
         mkdir /etc/nginx/conf.d
@@ -571,8 +574,9 @@ function installnginx(){
 	    then
 			mkdir /var/www
 		fi
-	fi  
-	#add nginx configuration file
+	fi
+	
+	#create nginx configuration file
 	if [ -f /etc/nginx/nginx.conf ]
 	then
 	    rm /etc/nginx/nginx.conf	
@@ -581,13 +585,16 @@ function installnginx(){
 		chmod +x /etc/nginx/nginx.conf
 		chmod +x /etc/init.d/nginx
 	fi	
+	
 	#set nginx auto-start
 	ln -s /usr/sbin/nginx /usr/bin/nginx
 	update-rc.d nginx defaults
+	
 	#add rewrite rule
 	cp 	${lnmpdir}/conf/wordpress.conf /etc/nginx/wordpress.conf
 	cp 	${lnmpdir}/conf/discuz.conf /etc/nginx/discuz.conf
 
+	#restart nginx	
 	/etc/init.d/nginx start
 		
 	echo "---------------------------------------------------------------"
@@ -595,7 +602,7 @@ function installnginx(){
     echo "---------------------------------------------------------------"
 	fi
 }
-function virtualhost(){
+function AddVhost(){
     echo "---------------------------------------------------------------"
 	echo "           begin to install virtual host                       "
     echo "---------------------------------------------------------------"
@@ -620,12 +627,14 @@ function virtualhost(){
 	<?php phpinfo(); ?>
 EOF
 
+	#restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "-----------------------------------------------------------" &&
 	echo -e "   ${CSUCCESS}install virtual host successfully!${CEND}    " &&
 	echo -e "-----------------------------------------------------------"
 }
-function sslvirtualhost(){
+function AddSslVhost(){
     echo "--------------------------------------------------------------"
 	echo "           begin to install ssl virtual host                  "
     echo "--------------------------------------------------------------"
@@ -637,31 +646,37 @@ function sslvirtualhost(){
 	read certificate
 	echo "please input ssl privatekey file path:"
 	read privatekey	
+	
 	#stop nginx
 	/etc/init.d/nginx stop	
+	
     #get nginx configure file template and edit
     cp  ${lnmpdir}/conf/sslhost.conf /etc/nginx/conf.d
 	mv /etc/nginx/conf.d/sslhost.conf /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/rewriterule/'${rewriterule}'/g' /etc/nginx/conf.d/${hostname}.conf	
 	sed -i 's#tennfy_certificate#'${certificate}'#g' /etc/nginx/conf.d/${hostname}.conf	
-	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf	
+	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf
+	
 	#new a virtualhost dir
 	mkdir /var/www/${hostname}
 	cd /var/www/${hostname}
 	chmod -R 777 /var/www
 	chown -R www-data:www-data /var/www
+	
 	#add phpinfo file
 	cat  >> /var/www/${hostname}/info.php <<EOF
 	<?php phpinfo(); ?>
 EOF
 
+    #restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "------------------------------------------------------------" &&
 	echo -e "   ${CSUCCESS}install ssl virtual host successfully!${CEND} " &&
 	echo -e "------------------------------------------------------------"
 }
-function googlereverse(){
+function AddGoogleReverse(){
 	echo "---------------------------------------------------------------"
 	echo "            begin to install google reverse proxy              "
     echo "---------------------------------------------------------------"
@@ -671,20 +686,45 @@ function googlereverse(){
 	read certificate
 	echo "please input ssl privatekey file path:"
 	read privatekey	
+	
 	#stop nginx
-	/etc/init.d/nginx stop	
+	/etc/init.d/nginx stop
+	
     #get nginx configure file template and edit
     cp  ${lnmpdir}/conf/google.conf /etc/nginx/conf.d
 	mv /etc/nginx/conf.d/google.conf /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's#tennfy_certificate#'${certificate}'#g' /etc/nginx/conf.d/${hostname}.conf	
-	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf	
+	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf
+	
+    #restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "-------------------------------------------------------------" &&
 	echo -e "${CSUCCESS}install google reverse proxy successfully!${CEND} " &&
 	echo -e "-------------------------------------------------------------"
 }
-function init(){
+function AddDirectory(){
+	echo "---------------------------------------------------------------"
+	echo "            begin to install file directory              "
+    echo "---------------------------------------------------------------"
+	echo "please input hostname(like tennfy.com):"
+	read hostname	
+	#stop nginx
+	/etc/init.d/nginx stop	
+    #get nginx configure file template and edit
+    cp  ${lnmpdir}/conf/directory.conf /etc/nginx/conf.d
+	mv /etc/nginx/conf.d/directory.conf /etc/nginx/conf.d/${hostname}.conf
+	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf	
+	
+	#restart nginx	
+	/etc/init.d/nginx start
+	
+	echo -e "-------------------------------------------------------------" &&
+	echo -e "${CSUCCESS}install file directory successfully!${CEND} " &&
+	echo -e "-------------------------------------------------------------"
+}
+function Init(){
     echo -e "-------------------------------------------------------------"
 	echo -e "               begin to initialize system                    "
     echo -e "-------------------------------------------------------------"
@@ -706,7 +746,7 @@ function init(){
 	echo -e "     ${CSUCCESS}initialize system successfully!${CEND}      " &&
 	echo -e "------------------------------------------------------------"
 }
-function installlnmp(){
+function InstallLnmp(){
     #init system
 	init
 	#install mysql, php, nginx
