@@ -216,8 +216,8 @@ function InstallLibiconv()
 		tar -zxvf libiconv-1.14.tar.gz -C ${LnmpDir}/packages	
 		cd ${LnmpDir}/packages/libiconv-1.14
 		./configure --prefix=/usr/local/libiconv
-		make
 		sed -i '/gets is a security hole/d' ./srclib/stdio.h
+		make
 		make install
 		cd /root
 		rm -f libiconv-1.14.tar.gz
