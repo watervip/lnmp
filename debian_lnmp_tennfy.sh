@@ -63,7 +63,7 @@ function CheckSystem()
 	echo "${SysBit}Bit, ${CpuNum}*CPU, ${RamTotal}MB*RAM, ${RamSwap}MB*Swap"
 	echo '-----------------------------------------------------------------'
 	
-	if [ "$RamSum" -lt "$Ramthreshold" ]
+	if [ "$RamSum" -lt "$RamThreshold" ]
 	then
 	    echo 'Script will install mysql and php by apt-get'
 		echo '-------------------------------------------------------------'
@@ -173,7 +173,7 @@ function RemoveUnneeded()
 }
 function InstallDotdeb() 
 {
-    if [ "$RamSum" -lt "$Ramthreshold" ]
+    if [ "$RamSum" -lt "$RamThreshold" ]
 	then
 		echo -e 'deb http://packages.dotdeb.org stable all' >> /etc/apt/sources.list
 		echo -e 'deb-src http://packages.dotdeb.org stable all' >> /etc/apt/sources.list
@@ -290,7 +290,7 @@ function InstallZendOpcache()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install zendopcache                    "
     echo "----------------------------------------------------------------" 
-    if [ "$RamSum" -lt "$Ramthreshold" ]
+    if [ "$RamSum" -lt "$RamThreshold" ]
 	then
 		apt-get install -y php-pear build-essential php5-dev
 		pecl install zendopcache-7.0.5
@@ -351,7 +351,7 @@ function InstallMemcached()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install memcached                    "
     echo "----------------------------------------------------------------" 
-    if [ "$RamSum" -lt "$Ramthreshold" ]
+    if [ "$RamSum" -lt "$RamThreshold" ]
 	then
 		apt-get install -y memcached php5-memcache php5-memcached
 	else
@@ -417,7 +417,7 @@ function InstallMysql()
     echo "----------------------------------------------------------------"
 	echo "                     begin to install mysql                     "
     echo "----------------------------------------------------------------" 
-	if [ "$RamSum" -lt "$Ramthreshold" ]
+	if [ "$RamSum" -lt "$RamThreshold" ]
 	then
 	    #install mysql
 		debconf-set-selections <<< "mysql-server mysql-server/root_password password $MysqlPass"
@@ -498,7 +498,7 @@ function InstallPhp(){
     echo "--------------------------------------------------------------"
 	echo "                      begin to install php                    "
     echo "--------------------------------------------------------------"  
-    if [ "$RamSum" -lt "$Ramthreshold" ]
+    if [ "$RamSum" -lt "$RamThreshold" ]
 	then	
 		apt-get -y install php5-fpm php5-gd php5-common php5-curl php5-imagick php5-mcrypt php5-mysql php5-cgi php5-cli 
 		/etc/init.d/php5-fpm stop
