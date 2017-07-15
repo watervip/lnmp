@@ -1,6 +1,6 @@
 #!/bin/bash
 #===============================================================================================
-#   System Required:  Debian or Ubuntu (32bit/64bit)
+#   System Required:  debian or ubuntu (32bit/64bit)
 #   Description:  Install lnmp for Debian or Ubuntu
 #   Author: tennfy <admin@tennfy.com>
 #   Intro:  http://www.tennfy.com
@@ -8,7 +8,7 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 clear
 echo "#############################################################"
-echo "# Install lnmp for Debian or Ubuntu (32bit/64bit)"
+echo "# Install lnmp for debian or ubuntu (32bit/64bit)"
 echo "# Intro: http://www.tennfy.com"
 echo "#"
 echo "# Author: tennfy <admin@tennfy.com>"
@@ -17,20 +17,21 @@ echo "#############################################################"
 echo ""
 
 #Variables
-lnmpdir='/opt/lnmp'
-Ramthreshold='512'
+LnmpDir='/opt/lnmp'
+php_version=''
 ZendOpcache=''
 Memcached=''
-php_version=''
 MysqlPass=''
 SysName=''
 SysBit=''
-Cpunum=''
+CpuNum=''
+RamThreshold='512'
 RamTotal=''
 RamSwap=''
 RamSum=''
 StartDate=''
 StartDateSecond=''
+
 #color
 CEND="\033[0m"
 CMSG="\033[1;36m"
@@ -41,9 +42,9 @@ CWARNING="\033[1;33m"
 #Version
 MysqlVersion='mysql-5.5.49'
 PhpVersion='php-5.4.45'
-NginxVersion='nginx-1.8.0'
+NginxVersion='nginx-1.12.1'
 
-
+    
 function CheckSystem()
 {
 	[ $(id -u) != '0' ] && echo '[Error] Please use root to install lnmp' && exit
@@ -53,12 +54,15 @@ function CheckSystem()
 	[ "$SysName" != 'debian'  ] && echo '[Error] Your system is not supported' && exit
 
 	SysBit='32' && [ `getconf WORD_BIT` == '32' ] && [ `getconf LONG_BIT` == '64' ] && SysBit='64'
-	Cpunum=`cat /proc/cpuinfo | grep 'processor' | wc -l`
+	CpuNum=`cat /proc/cpuinfo | grep 'processor' | wc -l`
 	RamTotal=`free -m | grep 'Mem' | awk '{print $2}'`
 	RamSwap=`free -m | grep 'Swap' | awk '{print $2}'`
 	RamSum=$[$RamTotal+$RamSwap]
+	
 	echo '-----------------------------------------------------------------'
-	echo "${SysBit}Bit, ${Cpunum}*CPU, ${RamTotal}MB*RAM, ${RamSwap}MB*Swap"	
+	echo "${SysBit}Bit, ${CpuNum}*CPU, ${RamTotal}MB*RAM, ${RamSwap}MB*Swap"
+	echo '-----------------------------------------------------------------'
+	
 	if [ "$RamSum" -lt "$Ramthreshold" ]
 	then
 	    echo 'Script will install mysql and php by apt-get'
@@ -86,11 +90,11 @@ function CheckSystem()
 				fi
 				if [ "$php_version" == '2' ]
 				then
-					PhpVersion='php-5.5.30'
+					PhpVersion='php-5.5.38'
 				fi
 				if [ "$php_version" == '3' ]
 				then
-					PhpVersion='php-5.6.16'
+					PhpVersion='php-5.6.31'
 			    fi
 				break
             fi
@@ -112,8 +116,8 @@ function CheckSystem()
 	while :
 	do
 		echo
-		read -p "Do you want to install Memcached? [y/n]: " memcached
-		if [[ ! $memcached =~ ^[y,n]$ ]]
+		read -p "Do you want to install Memcached? [y/n]: " Memcached
+		if [[ ! $Memcached =~ ^[y,n]$ ]]
 		then
 			echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
 		else
@@ -136,7 +140,7 @@ function InputMysqlPass()
 		echo -e "${CMSG}[OK] Your MySQL password is:$MysqlPass${CEND}"
 	fi
 }
-function Timezone()
+function ConfigTimezone()
 {
 	rm -rf /etc/localtime
 	ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -152,86 +156,7 @@ function CloseSelinux()
 {
 	[ -s /etc/selinux/config ] && sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 }
-function InstallLibiconv()
-{
-	if [ ! -d /usr/local/libiconv ]
-	then
-		#download libiconv
-		wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
-		tar -zxvf libiconv-1.14.tar.gz -C ${lnmpdir}/packages	
-		cd ${lnmpdir}/packages/libiconv-1.14
-		./configure --prefix=/usr/local/libiconv
-		make
-		make install
-		cd /root
-		rm -f libiconv-1.14.tar.gz
-	fi
-}
-function Installcurl()
-{
-	if [ ! -d /usr/local/curl ]
-	then
-		#download curl
-		wget http://curl.haxx.se/download/curl-7.46.0.tar.gz
-		tar -zxvf curl-7.46.0.tar.gz -C ${lnmpdir}/packages	
-		cd ${lnmpdir}/packages/curl-7.46.0
-		./configure --prefix=/usr/local/curl
-		make
-		make install
-		cd /root
-		rm -f curl-7.46.0.tar.gz
-	fi
-}
-function Installlibmcrypt()
-{
-	if [ ! -d /usr/local/libmcrypt ]
-	then
-		#download Libmcrypt
-		wget http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
-		tar -zxvf libmcrypt-2.5.8.tar.gz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/libmcrypt-2.5.8
-		./configure --prefix=/usr/local/libmcrypt
-		make
-		make install
-		cd /root
-		rm -f libmcrypt-2.5.8.tar.gz
-	fi
-}
-function Installmhash()
-{
-	if [ ! -d /usr/local/mhash ]
-	then
-		#download mhash
-		wget http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
-		tar -zxvf mhash-0.9.9.9.tar.gz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/mhash-0.9.9.9
-		./configure --prefix=/usr/local/mhash
-		make
-		make install
-		cd /root
-		rm -f mhash-0.9.9.9.tar.gz
-	fi
-}
-function Installmcrypt()
-{
-	if [ ! -d /usr/local/mcrypt ]
-	then	
-		#download mcrypt
-		wget http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
-		tar -zxvf mcrypt-2.6.8.tar.gz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/mcrypt-2.6.8
-		ln -s /usr/local/libmcrypt/bin/libmcrypt-config   /usr/bin/libmcrypt-config  #添加软连接
-        export LD_LIBRARY_PATH=/usr/local/mhash/lib:/usr/local/libmcrypt/lib
-		export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
-		export CFLAGS="-I/usr/local/mhash/include/"
-		./configure --prefix=/usr/local/mcrypt
-		make
-		make install
-		cd /root
-		rm -f mcrypt-2.6.8.tar.gz
-	fi
-}
-function remove_unneeded() 
+function RemoveUnneeded() 
 {
 	DEBIAN_FRONTEND=noninteractive apt-get -q -y remove --purge apache2* samba* bind9* nscd
 	invoke-rc.d saslauthd stop
@@ -246,7 +171,7 @@ function remove_unneeded()
 			apt-get install -y $packages --force-yes;apt-get -fy install;apt-get -y autoremove
 	done
 }
-function install_dotdeb() 
+function InstallDotdeb() 
 {
     if [ "$RamSum" -lt "$Ramthreshold" ]
 	then
@@ -260,29 +185,108 @@ function install_dotdeb()
 		apt-get update
 	fi
 }
-function downloadfiles()
+function DownloadFiles()
 {	
 	#download nginx
 	wget http://nginx.org/download/${NginxVersion}.tar.gz
-	tar -zxvf ${NginxVersion}.tar.gz -C ${lnmpdir}/packages
+	tar -zxvf ${NginxVersion}.tar.gz -C ${LnmpDir}/packages
 	#download phpmyadmin
 	wget --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/phpMyAdmin.tar.gz
-	tar -zxvf phpMyAdmin.tar.gz -C ${lnmpdir}/packages
+	tar -zxvf phpMyAdmin.tar.gz -C ${LnmpDir}/packages
 	#download configure files
 	wget --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/conf.tar.gz
-	tar -zxvf conf.tar.gz -C ${lnmpdir}/conf
+	tar -zxvf conf.tar.gz -C ${LnmpDir}/conf
 	#download nginx module
 	git clone https://github.com/cuber/ngx_http_google_filter_module
     git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module
-	cp -r ngx_http_google_filter_module ${lnmpdir}/packages/${NginxVersion}
-	cp -r ngx_http_substitutions_filter_module ${lnmpdir}/packages/${NginxVersion}
+	cp -r ngx_http_google_filter_module ${LnmpDir}/packages/${NginxVersion}
+	cp -r ngx_http_substitutions_filter_module ${LnmpDir}/packages/${NginxVersion}
 	
 	#delete all tar.gz packages
 	rm *.tar.gz
 	rm -r ngx_http_google_filter_module
 	rm -r ngx_http_substitutions_filter_module
 }
-function zendopcache()
+function InstallLibiconv()
+{
+	if [ ! -d /usr/local/libiconv ]
+	then
+		#download libiconv
+		wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
+		tar -zxvf libiconv-1.14.tar.gz -C ${LnmpDir}/packages	
+		cd ${LnmpDir}/packages/libiconv-1.14
+		./configure --prefix=/usr/local/libiconv
+		make
+		make install
+		cd /root
+		rm -f libiconv-1.14.tar.gz
+	fi
+}
+function InstallCurl()
+{
+	if [ ! -d /usr/local/curl ]
+	then
+		#download curl
+		wget http://curl.haxx.se/download/curl-7.46.0.tar.gz
+		tar -zxvf curl-7.46.0.tar.gz -C ${LnmpDir}/packages	
+		cd ${LnmpDir}/packages/curl-7.46.0
+		./configure --prefix=/usr/local/curl
+		make
+		make install
+		cd /root
+		rm -f curl-7.46.0.tar.gz
+	fi
+}
+function InstallLibmcrypt()
+{
+	if [ ! -d /usr/local/libmcrypt ]
+	then
+		#download Libmcrypt
+		wget http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
+		tar -zxvf libmcrypt-2.5.8.tar.gz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/libmcrypt-2.5.8
+		./configure --prefix=/usr/local/libmcrypt
+		make
+		make install
+		cd /root
+		rm -f libmcrypt-2.5.8.tar.gz
+	fi
+}
+function InstallMhash()
+{
+	if [ ! -d /usr/local/mhash ]
+	then
+		#download mhash
+		wget http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
+		tar -zxvf mhash-0.9.9.9.tar.gz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/mhash-0.9.9.9
+		./configure --prefix=/usr/local/mhash
+		make
+		make install
+		cd /root
+		rm -f mhash-0.9.9.9.tar.gz
+	fi
+}
+function InstallMcrypt()
+{
+	if [ ! -d /usr/local/mcrypt ]
+	then	
+		#download mcrypt
+		wget http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
+		tar -zxvf mcrypt-2.6.8.tar.gz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/mcrypt-2.6.8
+		ln -s /usr/local/libmcrypt/bin/libmcrypt-config   /usr/bin/libmcrypt-config  #添加软连接
+        export LD_LIBRARY_PATH=/usr/local/mhash/lib:/usr/local/libmcrypt/lib
+		export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
+		export CFLAGS="-I/usr/local/mhash/include/"
+		./configure --prefix=/usr/local/mcrypt
+		make
+		make install
+		cd /root
+		rm -f mcrypt-2.6.8.tar.gz
+	fi
+}
+function InstallZendOpcache()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install zendopcache                    "
     echo "----------------------------------------------------------------" 
@@ -307,8 +311,8 @@ EOF
 		if [ "$php_version" == '1' ]
 		then
 			wget http://pecl.php.net/get/zendopcache-7.0.5.tgz
-			tar xzf zendopcache-7.0.5.tgz -C ${lnmpdir}/packages
-			cd ${lnmpdir}/packages/zendopcache-7.0.5
+			tar xzf zendopcache-7.0.5.tgz -C ${LnmpDir}/packages
+			cd ${LnmpDir}/packages/zendopcache-7.0.5
 			/usr/local/php/bin/phpize
 			./configure --with-php-config=/usr/local/php/bin/php-config
 			make
@@ -343,7 +347,7 @@ EOF
 	echo "                zendopcache install finished                  "
 	echo "--------------------------------------------------------------"
 }
-function memcached()
+function InstallMemcached()
 {   echo "----------------------------------------------------------------"
 	echo "                begin to install memcached                    "
     echo "----------------------------------------------------------------" 
@@ -356,13 +360,13 @@ function memcached()
 		[ $? -ne 0 ] && useradd -M -s /sbin/nologin memcached
 		
 		wget http://www.memcached.org/files/memcached-1.4.25.tar.gz
-		tar xzf memcached-1.4.25.tar.gz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/memcached-1.4.25 
+		tar xzf memcached-1.4.25.tar.gz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/memcached-1.4.25 
 		./configure --prefix=/usr/local/memcached   
 		make && make install
 		
 		ln -s /usr/local/memcached/bin/memcached /usr/bin/memcached	
-		cp 	${lnmpdir}/conf/memcached /etc/init.d/memcached
+		cp 	${LnmpDir}/conf/memcached /etc/init.d/memcached
 		chmod +x /etc/init.d/memcached
 		update-rc.d memcached defaults
 		/etc/init.d/memcached start
@@ -371,8 +375,8 @@ function memcached()
 		
 		#install php-memcache
 		wget http://pecl.php.net/get/memcache-3.0.8.tgz
-		tar xzf memcache-3.0.8.tgz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/memcache-3.0.8
+		tar xzf memcache-3.0.8.tgz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/memcache-3.0.8
 		/usr/local/php/bin/phpize
 		./configure --with-php-config=/usr/local/php/bin/php-config
 		make && make install
@@ -383,8 +387,8 @@ function memcached()
 		
         #install php-memcached
 		wget https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz
-		tar xzf libmemcached-1.0.18.tar.gz -C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/libmemcached-1.0.18
+		tar xzf libmemcached-1.0.18.tar.gz -C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/libmemcached-1.0.18
 		sed -i "s#lthread -pthread -pthreads#lthread -lpthread -pthreads#g" ./configure
 		./configure --with-memcached=/usr/local/memcached  
 		make && make install
@@ -392,8 +396,8 @@ function memcached()
 		rm -f libmemcached-1.0.18.tar.gz
 		 
 		wget http://pecl.php.net/get/memcached-2.2.0.tgz
-		tar xzf memcached-2.2.0.tgz	-C ${lnmpdir}/packages
-		cd ${lnmpdir}/packages/memcached-2.2.0
+		tar xzf memcached-2.2.0.tgz	-C ${LnmpDir}/packages
+		cd ${LnmpDir}/packages/memcached-2.2.0
 		/usr/local/php/bin/phpize
 		./configure --with-php-config=/usr/local/php/bin/php-config
 		make && make install
@@ -408,7 +412,7 @@ function memcached()
 	echo "                memcached install finished                    "
 	echo "--------------------------------------------------------------"
 }
-function installmysql()
+function InstallMysql()
 {
     echo "----------------------------------------------------------------"
 	echo "                     begin to install mysql                     "
@@ -428,8 +432,8 @@ function installmysql()
 			mkdir /var/lib/mysql /var/run/mysqld /etc/mysql /etc/mysql/conf.d
 			#download mysql
 			wget http://cdn.mysql.com//Downloads/MySQL-5.5/${MysqlVersion}.tar.gz
-			tar -zxvf ${MysqlVersion}.tar.gz -C ${lnmpdir}/packages
-			cd ${lnmpdir}/packages/${MysqlVersion}
+			tar -zxvf ${MysqlVersion}.tar.gz -C ${LnmpDir}/packages
+			cd ${LnmpDir}/packages/${MysqlVersion}
 			groupadd mysql
 			useradd -s /sbin/nologin -g mysql mysql
 			cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/var/lib/mysql -DMYSQL_TCP_PORT=3306 -DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=complex -DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 
@@ -439,9 +443,10 @@ function installmysql()
 			chmod +w /usr/local/mysql
 			chown -R mysql:mysql /usr/local/mysql
 			chown -R mysql /var/run/mysqld
-			#add configuration file
+			
+			#create configuration file
 			rm -f /etc/mysql/my.cnf /usr/local/mysql/etc/my.cnf
-			cp ${lnmpdir}/conf/my.cnf /etc/mysql/my.cnf
+			cp ${LnmpDir}/conf/my.cnf /etc/mysql/my.cnf
 			/usr/local/mysql/scripts/mysql_install_db --user=mysql --defaults-file=/etc/mysql/my.cnf --basedir=/usr/local/mysql --datadir=/var/lib/mysql
 # EOF **********************************
 cat > /etc/ld.so.conf.d/mysql.conf<<EOF
@@ -489,7 +494,7 @@ EOF
 	echo "                      mysql install finished                  "
 	echo "--------------------------------------------------------------"
 }
-function installphp(){
+function InstallPhp(){
     echo "--------------------------------------------------------------"
 	echo "                      begin to install php                    "
     echo "--------------------------------------------------------------"  
@@ -508,11 +513,11 @@ function installphp(){
 		sed -i  s/'upload_max_filesize = 2M'/'upload_max_filesize = 16M'/ /etc/php5/fpm/php.ini    	
 	else
 	    #install curl
-		Installcurl
+		InstallCurl
 		#install mcrypt
-		Installlibmcrypt
-		Installmhash
-		Installmcrypt
+		InstallLibmcrypt
+		InstallMhash
+		InstallMcrypt
 	    #install Libiconv
 		InstallLibiconv
 		#install PHP
@@ -521,8 +526,8 @@ function installphp(){
 			mkdir /etc/php5
 			#download php
 			wget http://php.net/distributions/${PhpVersion}.tar.gz
-			tar -zxvf ${PhpVersion}.tar.gz -C ${lnmpdir}/packages
-			cd ${lnmpdir}/packages/${PhpVersion}
+			tar -zxvf ${PhpVersion}.tar.gz -C ${LnmpDir}/packages
+			cd ${LnmpDir}/packages/${PhpVersion}
 			groupadd www-data
 			useradd -m -s /sbin/nologin -g www-data www-data
 			[ "$ZendOpcache" == 'y' ] && [ "$php_version" == '2' -o "$php_version" == '3' ] && PHP_cache_tmp='--enable-opcache' || PHP_cache_tmp=''  
@@ -531,10 +536,10 @@ function installphp(){
 			make install
 			
 			#cp configuration file
-			cp 	${lnmpdir}/conf/php.ini /etc/php5/php.ini
+			cp 	${LnmpDir}/conf/php.ini /etc/php5/php.ini
 			sed -i "s#extension_dir = \"ext\"#extension_dir = \"`/usr/local/php/bin/php-config --extension-dir`\"#g" /etc/php5/php.ini
-			cp 	${lnmpdir}/conf/php-fpm.conf /etc/php5/php-fpm.conf
-			cp 	${lnmpdir}/conf/php5-fpm /etc/init.d/php5-fpm
+			cp 	${LnmpDir}/conf/php-fpm.conf /etc/php5/php-fpm.conf
+			cp 	${LnmpDir}/conf/php5-fpm /etc/init.d/php5-fpm
 			chmod +x /etc/init.d/php5-fpm
         
 			ln -s /usr/local/php/bin/php /usr/bin/php
@@ -551,19 +556,20 @@ function installphp(){
 	echo "                    php install finished                       "
     echo "---------------------------------------------------------------"	
 }
-function installnginx(){
+function InstallNginx(){
     echo "---------------------------------------------------------------"
 	echo "                      begin to install nginx                   "
     echo "---------------------------------------------------------------"
 	#install nginx
 	if [ ! -f /usr/sbin/nginx ]
 	then
-		cd ${lnmpdir}/packages/${NginxVersion}
+		cd ${LnmpDir}/packages/${NginxVersion}
 		./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-http_ssl_module  --with-http_gzip_static_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_uwsgi_module --without-http_scgi_module  --add-module=ngx_http_google_filter_module --add-module=ngx_http_substitutions_filter_module
 		make
 		make install
 		cd /root
-	# add conf.d dir
+		
+	#create conf.d directory
 	if [ ! -d /etc/nginx/conf.d ]
 	then
         mkdir /etc/nginx/conf.d
@@ -571,23 +577,27 @@ function installnginx(){
 	    then
 			mkdir /var/www
 		fi
-	fi  
-	#add nginx configuration file
+	fi
+	
+	#create nginx configuration file
 	if [ -f /etc/nginx/nginx.conf ]
 	then
 	    rm /etc/nginx/nginx.conf	
-        cp 	${lnmpdir}/conf/nginx.conf /etc/nginx/nginx.conf
-        cp 	${lnmpdir}/conf/nginx /etc/init.d/nginx
+        cp 	${LnmpDir}/conf/nginx.conf /etc/nginx/nginx.conf
+        cp 	${LnmpDir}/conf/nginx /etc/init.d/nginx
 		chmod +x /etc/nginx/nginx.conf
 		chmod +x /etc/init.d/nginx
 	fi	
+	
 	#set nginx auto-start
 	ln -s /usr/sbin/nginx /usr/bin/nginx
 	update-rc.d nginx defaults
+	
 	#add rewrite rule
-	cp 	${lnmpdir}/conf/wordpress.conf /etc/nginx/wordpress.conf
-	cp 	${lnmpdir}/conf/discuz.conf /etc/nginx/discuz.conf
+	cp 	${LnmpDir}/conf/wordpress.conf /etc/nginx/wordpress.conf
+	cp 	${LnmpDir}/conf/discuz.conf /etc/nginx/discuz.conf
 
+	#restart nginx	
 	/etc/init.d/nginx start
 		
 	echo "---------------------------------------------------------------"
@@ -595,7 +605,7 @@ function installnginx(){
     echo "---------------------------------------------------------------"
 	fi
 }
-function virtualhost(){
+function AddVhost(){
     echo "---------------------------------------------------------------"
 	echo "           begin to install virtual host                       "
     echo "---------------------------------------------------------------"
@@ -606,26 +616,28 @@ function virtualhost(){
 	#stop nginx
 	/etc/init.d/nginx stop	
     #get nginx configure file template and edit
-    cp  ${lnmpdir}/conf/host.conf /etc/nginx/conf.d
+    cp  ${LnmpDir}/conf/host.conf /etc/nginx/conf.d
 	mv /etc/nginx/conf.d/host.conf /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/rewriterule/'${rewriterule}'/g' /etc/nginx/conf.d/${hostname}.conf	
-	#make a virtualhost dir
+	#create a virtualhost dir
 	mkdir /var/www/${hostname}
 	cd /var/www/${hostname}
 	chmod -R 777 /var/www
 	chown -R www-data:www-data /var/www
-	#add phpinfo file
+	#create phpinfo file
 	cat  >> /var/www/${hostname}/info.php <<EOF
 	<?php phpinfo(); ?>
 EOF
 
+	#restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "-----------------------------------------------------------" &&
 	echo -e "   ${CSUCCESS}install virtual host successfully!${CEND}    " &&
 	echo -e "-----------------------------------------------------------"
 }
-function sslvirtualhost(){
+function AddSslVhost(){
     echo "--------------------------------------------------------------"
 	echo "           begin to install ssl virtual host                  "
     echo "--------------------------------------------------------------"
@@ -637,31 +649,37 @@ function sslvirtualhost(){
 	read certificate
 	echo "please input ssl privatekey file path:"
 	read privatekey	
+	
 	#stop nginx
 	/etc/init.d/nginx stop	
+	
     #get nginx configure file template and edit
-    cp  ${lnmpdir}/conf/sslhost.conf /etc/nginx/conf.d
+    cp  ${LnmpDir}/conf/sslhost.conf /etc/nginx/conf.d
 	mv /etc/nginx/conf.d/sslhost.conf /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/rewriterule/'${rewriterule}'/g' /etc/nginx/conf.d/${hostname}.conf	
 	sed -i 's#tennfy_certificate#'${certificate}'#g' /etc/nginx/conf.d/${hostname}.conf	
-	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf	
+	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf
+	
 	#new a virtualhost dir
 	mkdir /var/www/${hostname}
 	cd /var/www/${hostname}
 	chmod -R 777 /var/www
 	chown -R www-data:www-data /var/www
+	
 	#add phpinfo file
 	cat  >> /var/www/${hostname}/info.php <<EOF
 	<?php phpinfo(); ?>
 EOF
 
+    #restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "------------------------------------------------------------" &&
 	echo -e "   ${CSUCCESS}install ssl virtual host successfully!${CEND} " &&
 	echo -e "------------------------------------------------------------"
 }
-function googlereverse(){
+function AddGoogleReverse(){
 	echo "---------------------------------------------------------------"
 	echo "            begin to install google reverse proxy              "
     echo "---------------------------------------------------------------"
@@ -671,67 +689,103 @@ function googlereverse(){
 	read certificate
 	echo "please input ssl privatekey file path:"
 	read privatekey	
+	
 	#stop nginx
-	/etc/init.d/nginx stop	
+	/etc/init.d/nginx stop
+	
     #get nginx configure file template and edit
-    cp  ${lnmpdir}/conf/google.conf /etc/nginx/conf.d
+    cp  ${LnmpDir}/conf/google.conf /etc/nginx/conf.d
 	mv /etc/nginx/conf.d/google.conf /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf
 	sed -i 's#tennfy_certificate#'${certificate}'#g' /etc/nginx/conf.d/${hostname}.conf	
-	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf	
+	sed -i 's#tennfy_privatekey#'${privatekey}'#g' /etc/nginx/conf.d/${hostname}.conf
+	
+    #restart nginx	
 	/etc/init.d/nginx start
+	
 	echo -e "-------------------------------------------------------------" &&
 	echo -e "${CSUCCESS}install google reverse proxy successfully!${CEND} " &&
 	echo -e "-------------------------------------------------------------"
 }
-function init(){
+function AddDirectory(){
+	echo "---------------------------------------------------------------"
+	echo "            begin to install file directory              "
+    echo "---------------------------------------------------------------"
+	echo "please input hostname(like tennfy.com):"
+	read hostname
+	
+	#stop nginx
+	/etc/init.d/nginx stop	
+	
+    #get nginx configure file template and edit
+    cp  ${LnmpDir}/conf/directory.conf /etc/nginx/conf.d
+	mv /etc/nginx/conf.d/directory.conf /etc/nginx/conf.d/${hostname}.conf
+	sed -i 's/tennfy.com/'${hostname}'/g' /etc/nginx/conf.d/${hostname}.conf	
+	
+	#restart nginx	
+	/etc/init.d/nginx start
+	
+	echo -e "-------------------------------------------------------------" &&
+	echo -e "${CSUCCESS}install file directory successfully!${CEND} " &&
+	echo -e "-------------------------------------------------------------"
+}
+function Init(){
     echo -e "-------------------------------------------------------------"
 	echo -e "               begin to initialize system                    "
     echo -e "-------------------------------------------------------------"
 	cd /root
+	
     # create packages and conf directory
-	if [ ! -d ${lnmpdir} ]
+	if [ ! -d ${LnmpDir} ]
 	then 
-	    mkdir ${lnmpdir}
-		mkdir ${lnmpdir}/packages
-		mkdir ${lnmpdir}/conf
+	    mkdir ${LnmpDir}
+		mkdir ${LnmpDir}/packages
+		mkdir ${LnmpDir}/conf
 	fi
+	
+	#init system
 	CheckSystem
-	remove_unneeded
-	install_dotdeb
-	Timezone
+	RemoveUnneeded
+	InstallDotdeb
+	ConfigTimezone
 	CloseSelinux
-	downloadfiles
+	DownloadFiles
+	
 	echo -e "------------------------------------------------------------" &&
 	echo -e "     ${CSUCCESS}initialize system successfully!${CEND}      " &&
 	echo -e "------------------------------------------------------------"
 }
-function installlnmp(){
+function InstallLnmp(){
     #init system
-	init
+	Init
+	
 	#install mysql, php, nginx
-	installmysql
-	installphp
-	installnginx	
+	InstallMysql
+	InstallPhp
+	InstallNginx	
+	
 	#install extention
-	[ "$ZendOpcache" == 'y' ] && zendopcache
-	[ "$memcached" == 'y' ] && memcached
+	[ "$ZendOpcache" == 'y' ] && InstallZendOpcache
+	[ "$Memcached" == 'y' ] && InstallMemcached
 	#set web dir
-	cp -r ${lnmpdir}/packages/phpMyAdmin /var/www 
+	cp -r ${LnmpDir}/packages/phpMyAdmin /var/www 
+	
 	#restart lnmp
 	echo -e "-------------------------------------------------------------" &&
 	echo -e "                 begin to restart lnmp!                      " &&
 	echo -e "-------------------------------------------------------------"	
+	
 	/etc/init.d/nginx restart
 	/etc/init.d/php5-fpm restart
 	/etc/init.d/mysql restart
+	
 	echo -e "-------------------------------------------------------------" &&
 	echo -e "      ${CSUCCESS}lnmp install successfully!${CEND}           " &&
 	echo -e "-------------------------------------------------------------"
 	echo "Start time: ${StartDate}";
 	echo "Completion time: $(date) (Use: $[($(date +%s)-StartDateSecond)/60] minute)";
 }
-function addvhost(){
+function AddVirtualHost(){
     while :
     do
             echo
@@ -739,33 +793,40 @@ function addvhost(){
             echo -e "\t${CMSG}1${CEND}. Install virtual host"
             echo -e "\t${CMSG}2${CEND}. Install SSL virtual host"
             echo -e "\t${CMSG}3${CEND}. Install google reverse proxy"
+			echo -e "\t${CMSG}4${CEND}. Install file directory"
             read -p "Please input a number:(Default 1 press Enter) " host_type
             [ -z "$host_type" ] && host_type=1
-            if [[ ! $host_type =~ ^[1-3]$ ]];then
-                echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+            if [[ ! $host_type =~ ^[1-4]$ ]];then
+                echo "${CWARNING}input error! Please only input number 1,2,3,4${CEND}"
             else
                 if [ "$host_type" == '1' ]
 				then
-					virtualhost
+					AddVhost
 				fi
 				if [ "$host_type" == '2' ]
 				then
-					sslvirtualhost
+					AddSslVhost
 				fi
 				if [ "$host_type" == '3' ]
 				then
-					googlereverse
+					AddGoogleReverse
 			    fi
+				if [ "$host_type" == '4' ]
+				then
+					AddDirectory
+			    fi				
 				break
             fi
     done
 }
-function delvhost(){
+function DelVirtualHost(){
     echo "--------------------------------------------------------------"
 	echo "                   begin to delete host                       "
     echo "--------------------------------------------------------------"
 	echo "please input hostname(like tennfy.com):"
 	read hostname
+	
+	#create configuration files
 	if [ -f /etc/nginx/conf.d/${hostname}.conf ]
 	then
 	    rm -f /etc/nginx/conf.d/${hostname}.conf
@@ -774,12 +835,15 @@ function delvhost(){
 	then 
 	    rm -r /var/www/${hostname}
 	fi
+	
+	#start nginx
 	/etc/init.d/nginx start
+	
 	echo -e "------------------------------------------------------------" &&
 	echo -e "    ${CSUCCESS}delete virtual host successfully!${CEND}     " &&
 	echo -e "------------------------------------------------------------"
 }
-function uninstalllnmp(){
+function UninstallLnmp(){
     echo "--------------------------------------------------------------"
 	echo "                   begin to uninstall lnmp                    "
     echo "--------------------------------------------------------------"
@@ -787,14 +851,18 @@ function uninstalllnmp(){
 	/etc/init.d/php5-fpm stop
 	/etc/init.d/nginx stop
 	/etc/init.d/mysql stop
+	
 	#delete all install files
 	rm -rf /opt/lnmp
+	
 	#delete all virtual hosts
 	rm -rf /var/www
+	
 	#uninstall nginx
 	update-rc.d -f nginx remove
 	rm -rf /etc/nginx /etc/init.d/nginx /var/log/nginx
 	rm -f  /usr/sbin/nginx  /var/run/nginx.pid
+	
 	#uninstall php
 	if [ ! -d /usr/local/php ]
 	then 
@@ -808,6 +876,7 @@ function uninstalllnmp(){
 		    rm -rf /usr/local/memcached
 		fi
 	fi
+	
 	#usinstall mysql
 	if [ ! -d /usr/local/mysql ]
 	then 
@@ -817,6 +886,7 @@ function uninstalllnmp(){
 		rm -rf /etc/mysql /usr/local/mysql /var/lib/mysql /var/run/mysqld 
 		rm -f  /etc/init.d/mysql /usr/bin/mysql /usr/bin/mysqladmin /usr/bin/mysqldump /usr/bin/myisamchk /usr/bin/mysqld_safe /var/run/mysqld/mysqld.sock /etc/ld.so.conf.d/mysql.conf
 	fi 	
+	
 	echo -e "------------------------------------------------------------" &&
 	echo -e "    ${CSUCCESS}uninstall lnmp successfully!${CEND}          " &&
 	echo -e "------------------------------------------------------------"
@@ -826,16 +896,16 @@ action=$1
 [ -z $1 ] && action=install
 case "$action" in
 install)
-    installlnmp
+    InstallLnmp
     ;;
 addvhost)
-    addvhost
+    AddVirtualHost
     ;;
 delvhost)
-    delvhost
+    DelVirtualHost
     ;;
 uninstall)
-    uninstalllnmp
+    UninstallLnmp
     ;;
 *)
     echo "Arguments error! [${action} ]"
