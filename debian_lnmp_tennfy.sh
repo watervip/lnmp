@@ -44,7 +44,11 @@ MysqlVersion='mysql-5.5.56'
 PhpVersion='php-5.4.45'
 NginxVersion='nginx-1.12.1'
 
-    
+function Die()
+{
+	echo -e "${CFAILURE}[Error] $1 ${CEND}"
+	exit 1
+}    
 function CheckSystem()
 {
 	[ $(id -u) != '0' ] && echo '[Error] Please use root to install lnmp' && exit
@@ -68,37 +72,7 @@ function CheckSystem()
 	    echo 'Script will install mysql and php by apt-get'
 		echo '-------------------------------------------------------------'
 	else
-	    echo 'Script will install mysql and php by compile'
-		echo '-------------------------------------------------------------'
-		#select php version
-		while :
-        do
-            echo
-            echo 'Please select php version:'
-            echo -e "\t${CMSG}1${CEND}. Install PHP-5.4"
-            echo -e "\t${CMSG}2${CEND}. Install PHP-5.5"
-            echo -e "\t${CMSG}3${CEND}. Install PHP-5.6"
-            read -p "Please input a number:(Default 1 press Enter) " php_version
-            [ -z "$php_version" ] && php_version=1
-            if [[ ! $php_version =~ ^[1-3]$ ]]
-			then
-                echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
-            else
-                if [ "$php_version" == '1' ]
-				then
-					PhpVersion='php-5.4.45'
-				fi
-				if [ "$php_version" == '2' ]
-				then
-					PhpVersion='php-5.5.38'
-				fi
-				if [ "$php_version" == '3' ]
-				then
-					PhpVersion='php-5.6.31'
-			    fi
-				break
-            fi
-		done
+
 	fi	
 	#select zendopcache
 	while :
@@ -215,10 +189,14 @@ function InstallLibiconv()
 		wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
 		tar -zxvf libiconv-1.14.tar.gz -C ${LnmpDir}/packages	
 		cd ${LnmpDir}/packages/libiconv-1.14
-		./configure --prefix=/usr/local/libiconv
-		make
-		sed -i '/gets is a security hole/d' ./srclib/stdio.h
-		make install
+		./configure --prefix=/usr/local/libiconv && make \
+		&& sed -i '/gets is a security hole/d' ./srclib/stdio.h \
+		&& make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Libiconv installation failed!"
+		fi		
 		cd /root
 		rm -f libiconv-1.14.tar.gz
 	fi
@@ -231,9 +209,12 @@ function InstallCurl()
 		wget http://curl.haxx.se/download/curl-7.46.0.tar.gz
 		tar -zxvf curl-7.46.0.tar.gz -C ${LnmpDir}/packages	
 		cd ${LnmpDir}/packages/curl-7.46.0
-		./configure --prefix=/usr/local/curl
-		make
-		make install
+		./configure --prefix=/usr/local/curl && make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Curl installation failed!"
+		fi	
 		cd /root
 		rm -f curl-7.46.0.tar.gz
 	fi
@@ -246,9 +227,12 @@ function InstallLibmcrypt()
 		wget http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
 		tar -zxvf libmcrypt-2.5.8.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/libmcrypt-2.5.8
-		./configure --prefix=/usr/local/libmcrypt
-		make
-		make install
+		./configure --prefix=/usr/local/libmcrypt && make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Libmcrypt installation failed!"
+		fi	
 		cd /root
 		rm -f libmcrypt-2.5.8.tar.gz
 	fi
@@ -261,9 +245,12 @@ function InstallMhash()
 		wget http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
 		tar -zxvf mhash-0.9.9.9.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/mhash-0.9.9.9
-		./configure --prefix=/usr/local/mhash
-		make
-		make install
+		./configure --prefix=/usr/local/mhash && make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Mhash installation failed!"
+		fi	
 		cd /root
 		rm -f mhash-0.9.9.9.tar.gz
 	fi
@@ -280,9 +267,12 @@ function InstallMcrypt()
         export LD_LIBRARY_PATH=/usr/local/mhash/lib:/usr/local/libmcrypt/lib
 		export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
 		export CFLAGS="-I/usr/local/mhash/include/"
-		./configure --prefix=/usr/local/mcrypt
-		make
-		make install
+		./configure --prefix=/usr/local/mcrypt && make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Mcrypt installation failed!"
+		fi	
 		cd /root
 		rm -f mcrypt-2.6.8.tar.gz
 	fi
@@ -315,9 +305,13 @@ EOF
 			tar xzf zendopcache-7.0.5.tgz -C ${LnmpDir}/packages
 			cd ${LnmpDir}/packages/zendopcache-7.0.5
 			/usr/local/php/bin/phpize
-			./configure --with-php-config=/usr/local/php/bin/php-config
-			make
-			make install
+			./configure --with-php-config=/usr/local/php/bin/php-config \ 
+			&& make && make install
+			if [ $? -ne 0 ]
+			then
+			#failure indication
+				Die "ZendOpcache installation failed!"
+			fi	
 			cat >> /etc/php5/php.ini<<EOF
 [opcache]
 zend_extension="`/usr/local/php/bin/php-config --extension-dir`/opcache.so"
@@ -363,8 +357,13 @@ function InstallMemcached()
 		wget http://www.memcached.org/files/memcached-1.4.25.tar.gz
 		tar xzf memcached-1.4.25.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-1.4.25 
-		./configure --prefix=/usr/local/memcached   
-		make && make install
+		./configure --prefix=/usr/local/memcached \   
+		&& make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Memcached installation failed!"
+		fi	
 		
 		ln -s /usr/local/memcached/bin/memcached /usr/bin/memcached	
 		cp 	${LnmpDir}/conf/memcached /etc/init.d/memcached
@@ -379,8 +378,13 @@ function InstallMemcached()
 		tar xzf memcache-3.0.8.tgz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcache-3.0.8
 		/usr/local/php/bin/phpize
-		./configure --with-php-config=/usr/local/php/bin/php-config
-		make && make install
+		./configure --with-php-config=/usr/local/php/bin/php-config \ 
+		&& make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Php-memcache installation failed!"
+		fi	
 		
         sed -i 's#^extension_dir\(.*\)#extension_dir\1\nextension = "memcache.so"#g' /etc/php5/php.ini	
 		cd /root	
@@ -391,8 +395,13 @@ function InstallMemcached()
 		tar xzf libmemcached-1.0.18.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/libmemcached-1.0.18
 		sed -i "s#lthread -pthread -pthreads#lthread -lpthread -pthreads#g" ./configure
-		./configure --with-memcached=/usr/local/memcached  
-		make && make install
+		./configure --with-memcached=/usr/local/memcached  \
+		&& make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Php-memcached installation failed!"
+		fi			
 		cd /root
 		rm -f libmemcached-1.0.18.tar.gz
 		 
@@ -400,8 +409,13 @@ function InstallMemcached()
 		tar xzf memcached-2.2.0.tgz	-C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-2.2.0
 		/usr/local/php/bin/phpize
-		./configure --with-php-config=/usr/local/php/bin/php-config
-		make && make install
+		./configure --with-php-config=/usr/local/php/bin/php-config \
+		&& make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Memcached installation failed!"
+		fi	
 		
 		sed -i 's#^extension_dir\(.*\)#extension_dir\1\nextension = "memcached.so"#g' /etc/php5/php.ini	
 		cd /root	
@@ -437,10 +451,14 @@ function InstallMysql()
 			cd ${LnmpDir}/packages/${MysqlVersion}
 			groupadd mysql
 			useradd -s /sbin/nologin -g mysql mysql
-			cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/var/lib/mysql -DMYSQL_TCP_PORT=3306 -DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=complex -DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 
-			make
-			make install
-			
+			cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/var/lib/mysql -DMYSQL_TCP_PORT=3306 -DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=complex -DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 \
+			&& make && make install
+			if [ $? -ne 0 ]
+			then
+			#failure indication
+				Die "Mysql installation failed!"
+			fi	
+
 			chmod +w /usr/local/mysql
 			chown -R mysql:mysql /usr/local/mysql
 			chown -R mysql /var/run/mysqld
@@ -448,6 +466,8 @@ function InstallMysql()
 			#create configuration file
 			rm -f /etc/mysql/my.cnf /usr/local/mysql/etc/my.cnf
 			cp ${LnmpDir}/conf/my.cnf /etc/mysql/my.cnf
+			
+			#install db
 			/usr/local/mysql/scripts/mysql_install_db --user=mysql --defaults-file=/etc/mysql/my.cnf --basedir=/usr/local/mysql --datadir=/var/lib/mysql
 # EOF **********************************
 cat > /etc/ld.so.conf.d/mysql.conf<<EOF
@@ -532,9 +552,13 @@ function InstallPhp(){
 			groupadd www-data
 			useradd -m -s /sbin/nologin -g www-data www-data
 			[ "$ZendOpcache" == 'y' ] && [ "$php_version" == '2' -o "$php_version" == '3' ] && PHP_cache_tmp='--enable-opcache' || PHP_cache_tmp=''  
-			./configure --prefix=/usr/local/php --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-config-file-path=/etc/php5 --with-openssl --with-zlib  --with-curl=/usr/local/curl --enable-sockets --with-xmlrpc --enable-ftp --with-gd --with-jpeg-dir --with-png-dir --with-freetype-dir --enable-gd-native-ttf --enable-mbstring --enable-zip --with-iconv=/usr/local/libiconv --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pear --disable-fileinfo --with-mcrypt=/usr/local/libmcrypt $PHP_cache_tmp
-			make
-			make install
+			./configure --prefix=/usr/local/php --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-config-file-path=/etc/php5 --with-openssl --with-zlib  --with-curl=/usr/local/curl --enable-sockets --with-xmlrpc --enable-ftp --with-gd --with-jpeg-dir --with-png-dir --with-freetype-dir --enable-gd-native-ttf --enable-mbstring --enable-zip --with-iconv=/usr/local/libiconv --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pear --disable-fileinfo --with-mcrypt=/usr/local/libmcrypt $PHP_cache_tmp \
+			&& make && make install
+			if [ $? -ne 0 ]
+			then
+			#failure indication
+				Die "Php installation failed!"
+			fi				
 			
 			#cp configuration file
 			cp 	${LnmpDir}/conf/php.ini /etc/php5/php.ini
@@ -565,9 +589,14 @@ function InstallNginx(){
 	if [ ! -f /usr/sbin/nginx ]
 	then
 		cd ${LnmpDir}/packages/${NginxVersion}
-		./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-http_ssl_module  --with-http_gzip_static_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_uwsgi_module --without-http_scgi_module  --add-module=ngx_http_google_filter_module --add-module=ngx_http_substitutions_filter_module
-		make
-		make install
+		./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-http_ssl_module  --with-http_gzip_static_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_uwsgi_module --without-http_scgi_module  --add-module=ngx_http_google_filter_module --add-module=ngx_http_substitutions_filter_module \
+		&& make && make install
+		if [ $? -ne 0 ]
+		then
+		#failure indication
+			Die "Nginx installation failed!"
+		fi
+			
 		cd /root
 		
 	#create conf.d directory
