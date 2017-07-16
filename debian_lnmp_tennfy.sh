@@ -72,7 +72,37 @@ function CheckSystem()
 	    echo 'Script will install mysql and php by apt-get'
 		echo '-------------------------------------------------------------'
 	else
-
+	    echo 'Script will install mysql and php by compile'
+		echo '-------------------------------------------------------------'
+		#select php version
+		while :
+        do
+            echo
+            echo 'Please select php version:'
+            echo -e "\t${CMSG}1${CEND}. Install PHP-5.4"
+            echo -e "\t${CMSG}2${CEND}. Install PHP-5.5"
+            echo -e "\t${CMSG}3${CEND}. Install PHP-5.6"
+            read -p "Please input a number:(Default 1 press Enter) " php_version
+            [ -z "$php_version" ] && php_version=1
+            if [[ ! $php_version =~ ^[1-3]$ ]]
+			then
+                echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+            else
+                if [ "$php_version" == '1' ]
+				then
+					PhpVersion='php-5.4.45'
+				fi
+				if [ "$php_version" == '2' ]
+				then
+					PhpVersion='php-5.5.38'
+				fi
+				if [ "$php_version" == '3' ]
+				then
+					PhpVersion='php-5.6.31'
+			    fi
+				break
+            fi
+		done		
 	fi	
 	#select zendopcache
 	while :
