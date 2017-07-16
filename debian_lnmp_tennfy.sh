@@ -293,7 +293,7 @@ function InstallMcrypt()
 		wget http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
 		tar -zxvf mcrypt-2.6.8.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/mcrypt-2.6.8
-		ln -s /usr/local/libmcrypt/bin/libmcrypt-config   /usr/bin/libmcrypt-config  #添加软连接
+		ln -s /usr/local/libmcrypt/bin/libmcrypt-config   /usr/bin/libmcrypt-config
         export LD_LIBRARY_PATH=/usr/local/mhash/lib:/usr/local/libmcrypt/lib
 		export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
 		export CFLAGS="-I/usr/local/mhash/include/"
@@ -335,8 +335,8 @@ EOF
 			tar xzf zendopcache-7.0.5.tgz -C ${LnmpDir}/packages
 			cd ${LnmpDir}/packages/zendopcache-7.0.5
 			/usr/local/php/bin/phpize
-			./configure --with-php-config=/usr/local/php/bin/php-config \ 
-			&& make && make install
+			./configure --with-php-config=/usr/local/php/bin/php-config && \
+			make && make install
 			if [ $? -ne 0 ]
 			then
 			#failure indication
@@ -387,8 +387,8 @@ function InstallMemcached()
 		wget http://www.memcached.org/files/memcached-1.4.25.tar.gz
 		tar xzf memcached-1.4.25.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-1.4.25 
-		./configure --prefix=/usr/local/memcached \   
-		&& make && make install
+		./configure --prefix=/usr/local/memcached && \   
+		make && make install
 		if [ $? -ne 0 ]
 		then
 		#failure indication
@@ -408,8 +408,8 @@ function InstallMemcached()
 		tar xzf memcache-3.0.8.tgz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcache-3.0.8
 		/usr/local/php/bin/phpize
-		./configure --with-php-config=/usr/local/php/bin/php-config \ 
-		&& make && make install
+		./configure --with-php-config=/usr/local/php/bin/php-config && \ 
+		make && make install
 		if [ $? -ne 0 ]
 		then
 		#failure indication
@@ -425,8 +425,8 @@ function InstallMemcached()
 		tar xzf libmemcached-1.0.18.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/libmemcached-1.0.18
 		sed -i "s#lthread -pthread -pthreads#lthread -lpthread -pthreads#g" ./configure
-		./configure --with-memcached=/usr/local/memcached  \
-		&& make && make install
+		./configure --with-memcached=/usr/local/memcached && \
+		make && make install
 		if [ $? -ne 0 ]
 		then
 		#failure indication
@@ -439,8 +439,8 @@ function InstallMemcached()
 		tar xzf memcached-2.2.0.tgz	-C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-2.2.0
 		/usr/local/php/bin/phpize
-		./configure --with-php-config=/usr/local/php/bin/php-config \
-		&& make && make install
+		./configure --with-php-config=/usr/local/php/bin/php-config && \
+		make && make install
 		if [ $? -ne 0 ]
 		then
 		#failure indication
@@ -481,8 +481,8 @@ function InstallMysql()
 			cd ${LnmpDir}/packages/${MysqlVersion}
 			groupadd mysql
 			useradd -s /sbin/nologin -g mysql mysql
-			cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/var/lib/mysql -DMYSQL_TCP_PORT=3306 -DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=complex -DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 \
-			&& make && make install
+			cmake -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/var/lib/mysql -DMYSQL_TCP_PORT=3306 -DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=complex -DWITH_READLINE=1 -DENABLED_LOCAL_INFILE=1 && \
+			make && make install
 			if [ $? -ne 0 ]
 			then
 			#failure indication
@@ -582,8 +582,8 @@ function InstallPhp(){
 			groupadd www-data
 			useradd -m -s /sbin/nologin -g www-data www-data
 			[ "$ZendOpcache" == 'y' ] && [ "$php_version" == '2' -o "$php_version" == '3' ] && PHP_cache_tmp='--enable-opcache' || PHP_cache_tmp=''  
-			./configure --prefix=/usr/local/php --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-config-file-path=/etc/php5 --with-openssl --with-zlib  --with-curl=/usr/local/curl --enable-sockets --with-xmlrpc --enable-ftp --with-gd --with-jpeg-dir --with-png-dir --with-freetype-dir --enable-gd-native-ttf --enable-mbstring --enable-zip --with-iconv=/usr/local/libiconv --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pear --disable-fileinfo --with-mcrypt=/usr/local/libmcrypt $PHP_cache_tmp \
-			&& make && make install
+			./configure --prefix=/usr/local/php --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-config-file-path=/etc/php5 --with-openssl --with-zlib  --with-curl=/usr/local/curl --enable-sockets --with-xmlrpc --enable-ftp --with-gd --with-jpeg-dir --with-png-dir --with-freetype-dir --enable-gd-native-ttf --enable-mbstring --enable-zip --with-iconv=/usr/local/libiconv --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pear --disable-fileinfo --with-mcrypt=/usr/local/libmcrypt $PHP_cache_tmp && \
+			make && make install
 			if [ $? -ne 0 ]
 			then
 			#failure indication
@@ -619,8 +619,8 @@ function InstallNginx(){
 	if [ ! -f /usr/sbin/nginx ]
 	then
 		cd ${LnmpDir}/packages/${NginxVersion}
-		./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-http_ssl_module  --with-http_gzip_static_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_uwsgi_module --without-http_scgi_module  --add-module=ngx_http_google_filter_module --add-module=ngx_http_substitutions_filter_module \
-		&& make && make install
+		./configure --user=www-data --group=www-data --sbin-path=/usr/sbin/nginx --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-http_ssl_module  --with-http_gzip_static_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_uwsgi_module --without-http_scgi_module  --add-module=ngx_http_google_filter_module --add-module=ngx_http_substitutions_filter_module && \
+		make && make install
 		if [ $? -ne 0 ]
 		then
 		#failure indication
