@@ -141,7 +141,7 @@ function CheckSystem()
             [ -z "$php_version" ] && php_version=1
             if [[ ! $php_version =~ ^[1-3]$ ]]
 			then
-                echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+                echo -e "${CWARNING}input error! Please only input number 1,2,3${CEND}"
             else
                 if [ "$php_version" == '1' ]
 				then
@@ -166,7 +166,7 @@ function CheckSystem()
 		read -p "Do you want to install ZendOpcache? [y/n]: " ZendOpcache
 		if [[ ! $ZendOpcache =~ ^[y,n]$ ]]
 		then
-			echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+			echo -e "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
 		else
 			break
 		fi
@@ -178,7 +178,7 @@ function CheckSystem()
 		read -p "Do you want to install Memcached? [y/n]: " Memcached
 		if [[ ! $Memcached =~ ^[y,n]$ ]]
 		then
-			echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+			echo -e "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
 		else
 			break
 		fi
@@ -275,7 +275,7 @@ function InstallLibiconv()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Libiconv installation failed!"
+			Die "Libiconv install failed!"
 		fi		
 		cd /root
 		rm -f libiconv-1.14.tar.gz
@@ -293,7 +293,7 @@ function InstallCurl()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Curl installation failed!"
+			Die "Curl install failed!"
 		fi	
 		cd /root
 		rm -f curl-7.46.0.tar.gz
@@ -311,7 +311,7 @@ function InstallLibmcrypt()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Libmcrypt installation failed!"
+			Die "Libmcrypt install failed!"
 		fi	
 		cd /root
 		rm -f libmcrypt-2.5.8.tar.gz
@@ -329,7 +329,7 @@ function InstallMhash()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Mhash installation failed!"
+			Die "Mhash install failed!"
 		fi	
 		cd /root
 		rm -f mhash-0.9.9.9.tar.gz
@@ -351,7 +351,7 @@ function InstallMcrypt()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Mcrypt installation failed!"
+			Die "Mcrypt install failed!"
 		fi	
 		cd /root
 		rm -f mcrypt-2.6.8.tar.gz
@@ -391,7 +391,7 @@ EOF
 			if [ $? -ne 0 ]
 			then
 			#failure indication
-				Die "ZendOpcache installation failed!"
+				Die "ZendOpcache install failed!"
 			fi	
 			cat >> /etc/php5/php.ini<<EOF
 [opcache]
@@ -444,7 +444,7 @@ function InstallMemcached()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Memcached installation failed!"
+			Die "Memcached install failed!"
 		fi	
 		
 		ln -s /usr/local/memcached/bin/memcached /usr/bin/memcached	
@@ -465,7 +465,7 @@ function InstallMemcached()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Php-memcache installation failed!"
+			Die "Php-memcache install failed!"
 		fi	
 		
         sed -i 's#^extension_dir\(.*\)#extension_dir\1\nextension = "memcache.so"#g' /etc/php5/php.ini	
@@ -482,7 +482,7 @@ function InstallMemcached()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Php-memcached installation failed!"
+			Die "Php-memcached install failed!"
 		fi			
 		cd /root
 		rm -f libmemcached-1.0.18.tar.gz
@@ -496,7 +496,7 @@ function InstallMemcached()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Memcached installation failed!"
+			Die "Memcached install failed!"
 		fi	
 		
 		sed -i 's#^extension_dir\(.*\)#extension_dir\1\nextension = "memcached.so"#g' /etc/php5/php.ini	
@@ -538,7 +538,7 @@ function InstallMysql()
 			if [ $? -ne 0 ]
 			then
 			#failure indication
-				Die "Mysql installation failed!"
+				Die "Mysql install failed!"
 			fi	
 
 			chmod +w /usr/local/mysql
@@ -640,7 +640,7 @@ function InstallPhp()
 			if [ $? -ne 0 ]
 			then
 			#failure indication
-				Die "Php installation failed!"
+				Die "Php install failed!"
 			fi				
 			
 			#cp configuration file
@@ -678,7 +678,7 @@ function InstallNginx()
 		if [ $? -ne 0 ]
 		then
 		#failure indication
-			Die "Nginx installation failed!"
+			Die "Nginx install failed!"
 		fi
 			
 		cd /root
