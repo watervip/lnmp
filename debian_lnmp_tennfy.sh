@@ -245,10 +245,10 @@ function DownloadFiles()
 	Download http://nginx.org/download/${NginxVersion}.tar.gz
 	tar -zxvf ${NginxVersion}.tar.gz -C ${LnmpDir}/packages
 	#download phpmyadmin
-	Download --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/phpMyAdmin.tar.gz
+	Download https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/phpMyAdmin.tar.gz
 	tar -zxvf phpMyAdmin.tar.gz -C ${LnmpDir}/packages
 	#download configure files
-	Download --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/conf.tar.gz
+	Download https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/conf.tar.gz
 	tar -zxvf conf.tar.gz -C ${LnmpDir}/conf
 	#download nginx module
 	git clone https://github.com/cuber/ngx_http_google_filter_module
