@@ -48,7 +48,62 @@ function Die()
 {
 	echo -e "${CFAILURE}[Error] $1 ${CEND}"
 	exit 1
-}    
+}
+function PackageInstall()
+{
+    apt-get update
+    for package in $*  
+    do  
+		echo "[${package} Installing] ************************************************** >>"
+		apt-get install -y --force-yes $package 
+		if [ $? -ne 0 ]
+		then
+			 Die "${package} install failed"
+		fi
+    done  
+}
+function Download()
+{
+	wget --no-check-certificate -c $1
+	if [ $? -ne 0 ]
+	then
+		Die "File download failed"
+	fi
+}
+function GetDebianVersion()
+{
+	if [ -f /etc/debian_version ]
+	then
+		local main_version=$1
+		local debian_version=`cat /etc/debian_version|awk -F '.' '{print $1}'`
+		if [ "${main_version}" == "${debian_version}" ]
+		then
+		    return 0
+		else 
+			return 1
+		fi
+	else
+		Die "Distribution is not supported"
+	fi    	
+}
+function GetSystemBit()
+{
+	ldconfig
+	if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] 
+	then
+		if [ '64' = $1 ]; then
+		    return 0
+		else
+		    return 1
+		fi			
+	else
+		if [ '32' = $1 ]; then
+		    return 0
+		else
+		    return 1
+		fi		
+	fi
+}
 function CheckSystem()
 {
 	[ $(id -u) != '0' ] && echo '[Error] Please use root to install lnmp' && exit
@@ -168,12 +223,7 @@ function RemoveUnneeded()
 	update-rc.d saslauthd disable
 	update-rc.d xinetd disable
 	
-	apt-get update
-	for packages in build-essential gcc g++ cmake make ntp logrotate automake patch autoconf autoconf2.13 re2c wget flex cron libzip-dev libc6-dev rcconf bison cpp binutils tar bzip2 libncurses5-dev libncurses5 libtool libevent-dev libpcre3 libpcre3-dev libpcrecpp0 libssl-dev zlibc openssl libsasl2-dev libxml2 libxml2-dev libltdl3-dev libltdl-dev zlib1g zlib1g-dev libbz2-1.0 libbz2-dev libglib2.0-0 libglib2.0-dev libpng3 libfreetype6 libfreetype6-dev libjpeg62 libjpeg62-dev libjpeg-dev libpng-dev libpng12-0 libpng12-dev libpq-dev libpq5 gettext libcap-dev ftp expect zip unzip git vim
-	do
-			echo "[${packages} Installing] ************************************************** >>"
-			apt-get install -y $packages --force-yes;apt-get -fy install;apt-get -y autoremove
-	done
+	PackageInstall build-essential gcc g++ cmake make ntp logrotate automake patch autoconf autoconf2.13 re2c wget flex cron libzip-dev libc6-dev rcconf bison cpp binutils tar bzip2 libncurses5-dev libncurses5 libtool libevent-dev libpcre3 libpcre3-dev libpcrecpp0 libssl-dev zlibc openssl libsasl2-dev libxml2 libxml2-dev libltdl3-dev libltdl-dev zlib1g zlib1g-dev libbz2-1.0 libbz2-dev libglib2.0-0 libglib2.0-dev libpng3 libfreetype6 libfreetype6-dev libjpeg62 libjpeg62-dev libjpeg-dev libpng-dev libpng12-0 libpng12-dev libpq-dev libpq5 gettext libcap-dev ftp expect zip unzip git vim
 }
 function InstallDotdeb() 
 {
@@ -192,13 +242,13 @@ function InstallDotdeb()
 function DownloadFiles()
 {	
 	#download nginx
-	wget http://nginx.org/download/${NginxVersion}.tar.gz
+	Download http://nginx.org/download/${NginxVersion}.tar.gz
 	tar -zxvf ${NginxVersion}.tar.gz -C ${LnmpDir}/packages
 	#download phpmyadmin
-	wget --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/phpMyAdmin.tar.gz
+	Download --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/phpMyAdmin.tar.gz
 	tar -zxvf phpMyAdmin.tar.gz -C ${LnmpDir}/packages
 	#download configure files
-	wget --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/conf.tar.gz
+	Download --no-check-certificate https://raw.githubusercontent.com/tennfy/debian_lnmp_tennfy/master/conf.tar.gz
 	tar -zxvf conf.tar.gz -C ${LnmpDir}/conf
 	#download nginx module
 	git clone https://github.com/cuber/ngx_http_google_filter_module
@@ -216,7 +266,7 @@ function InstallLibiconv()
 	if [ ! -d /usr/local/libiconv ]
 	then
 		#download libiconv
-		wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
+		Download http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
 		tar -zxvf libiconv-1.14.tar.gz -C ${LnmpDir}/packages	
 		cd ${LnmpDir}/packages/libiconv-1.14
 		./configure --prefix=/usr/local/libiconv && make \
@@ -236,7 +286,7 @@ function InstallCurl()
 	if [ ! -d /usr/local/curl ]
 	then
 		#download curl
-		wget http://curl.haxx.se/download/curl-7.46.0.tar.gz
+		Download http://curl.haxx.se/download/curl-7.46.0.tar.gz
 		tar -zxvf curl-7.46.0.tar.gz -C ${LnmpDir}/packages	
 		cd ${LnmpDir}/packages/curl-7.46.0
 		./configure --prefix=/usr/local/curl && make && make install
@@ -254,7 +304,7 @@ function InstallLibmcrypt()
 	if [ ! -d /usr/local/libmcrypt ]
 	then
 		#download Libmcrypt
-		wget http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
+		Download http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
 		tar -zxvf libmcrypt-2.5.8.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/libmcrypt-2.5.8
 		./configure --prefix=/usr/local/libmcrypt && make && make install
@@ -272,7 +322,7 @@ function InstallMhash()
 	if [ ! -d /usr/local/mhash ]
 	then
 		#download mhash
-		wget http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
+		Download http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
 		tar -zxvf mhash-0.9.9.9.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/mhash-0.9.9.9
 		./configure --prefix=/usr/local/mhash && make && make install
@@ -290,7 +340,7 @@ function InstallMcrypt()
 	if [ ! -d /usr/local/mcrypt ]
 	then	
 		#download mcrypt
-		wget http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
+		Download http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
 		tar -zxvf mcrypt-2.6.8.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/mcrypt-2.6.8
 		ln -s /usr/local/libmcrypt/bin/libmcrypt-config   /usr/bin/libmcrypt-config
@@ -308,7 +358,8 @@ function InstallMcrypt()
 	fi
 }
 function InstallZendOpcache()
-{   echo "----------------------------------------------------------------"
+{   
+    echo "----------------------------------------------------------------"
 	echo "                begin to install zendopcache                    "
     echo "----------------------------------------------------------------" 
     if [ "$RamSum" -lt "$RamThreshold" ]
@@ -331,7 +382,7 @@ EOF
 	else
 		if [ "$php_version" == '1' ]
 		then
-			wget http://pecl.php.net/get/zendopcache-7.0.5.tgz
+			Download http://pecl.php.net/get/zendopcache-7.0.5.tgz
 			tar xzf zendopcache-7.0.5.tgz -C ${LnmpDir}/packages
 			cd ${LnmpDir}/packages/zendopcache-7.0.5
 			/usr/local/php/bin/phpize
@@ -373,7 +424,8 @@ EOF
 	echo "--------------------------------------------------------------"
 }
 function InstallMemcached()
-{   echo "----------------------------------------------------------------"
+{  
+    echo "----------------------------------------------------------------"
 	echo "                begin to install memcached                    "
     echo "----------------------------------------------------------------" 
     if [ "$RamSum" -lt "$RamThreshold" ]
@@ -384,7 +436,7 @@ function InstallMemcached()
 		id -u memcached >/dev/null 2>&1
 		[ $? -ne 0 ] && useradd -M -s /sbin/nologin memcached
 		
-		wget http://www.memcached.org/files/memcached-1.4.25.tar.gz
+		Download http://www.memcached.org/files/memcached-1.4.25.tar.gz
 		tar xzf memcached-1.4.25.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-1.4.25 
 		./configure --prefix=/usr/local/memcached && \   
@@ -404,7 +456,7 @@ function InstallMemcached()
 		rm -f memcached-1.4.25.tar.gz
 		
 		#install php-memcache
-		wget http://pecl.php.net/get/memcache-3.0.8.tgz
+		Download http://pecl.php.net/get/memcache-3.0.8.tgz
 		tar xzf memcache-3.0.8.tgz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcache-3.0.8
 		/usr/local/php/bin/phpize
@@ -421,7 +473,7 @@ function InstallMemcached()
 		rm -f memcache-3.0.8.tgz
 		
         #install php-memcached
-		wget https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz
+		Download https://launchpad.net/libmemcached/1.0/1.0.18/+download/libmemcached-1.0.18.tar.gz
 		tar xzf libmemcached-1.0.18.tar.gz -C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/libmemcached-1.0.18
 		sed -i "s#lthread -pthread -pthreads#lthread -lpthread -pthreads#g" ./configure
@@ -435,7 +487,7 @@ function InstallMemcached()
 		cd /root
 		rm -f libmemcached-1.0.18.tar.gz
 		 
-		wget http://pecl.php.net/get/memcached-2.2.0.tgz
+		Download http://pecl.php.net/get/memcached-2.2.0.tgz
 		tar xzf memcached-2.2.0.tgz	-C ${LnmpDir}/packages
 		cd ${LnmpDir}/packages/memcached-2.2.0
 		/usr/local/php/bin/phpize
@@ -476,7 +528,7 @@ function InstallMysql()
 		then
 			mkdir /var/lib/mysql /var/run/mysqld /etc/mysql /etc/mysql/conf.d
 			#download mysql
-			wget http://cdn.mysql.com//Downloads/MySQL-5.5/${MysqlVersion}.tar.gz
+			Download http://cdn.mysql.com//Downloads/MySQL-5.5/${MysqlVersion}.tar.gz
 			tar -zxvf ${MysqlVersion}.tar.gz -C ${LnmpDir}/packages
 			cd ${LnmpDir}/packages/${MysqlVersion}
 			groupadd mysql
@@ -545,7 +597,8 @@ EOF
 	echo "                      mysql install finished                  "
 	echo "--------------------------------------------------------------"
 }
-function InstallPhp(){
+function InstallPhp()
+{
     echo "--------------------------------------------------------------"
 	echo "                      begin to install php                    "
     echo "--------------------------------------------------------------"  
@@ -576,7 +629,7 @@ function InstallPhp(){
 		then
 			mkdir /etc/php5
 			#download php
-			wget http://php.net/distributions/${PhpVersion}.tar.gz
+			Download http://php.net/distributions/${PhpVersion}.tar.gz
 			tar -zxvf ${PhpVersion}.tar.gz -C ${LnmpDir}/packages
 			cd ${LnmpDir}/packages/${PhpVersion}
 			groupadd www-data
@@ -611,7 +664,8 @@ function InstallPhp(){
 	echo "                    php install finished                       "
     echo "---------------------------------------------------------------"	
 }
-function InstallNginx(){
+function InstallNginx()
+{
     echo "---------------------------------------------------------------"
 	echo "                      begin to install nginx                   "
     echo "---------------------------------------------------------------"
@@ -665,7 +719,8 @@ function InstallNginx(){
     echo "---------------------------------------------------------------"
 	fi
 }
-function AddVhost(){
+function AddVhost()
+{
     echo "---------------------------------------------------------------"
 	echo "           begin to install virtual host                       "
     echo "---------------------------------------------------------------"
@@ -697,7 +752,8 @@ EOF
 	echo -e "   ${CSUCCESS}install virtual host successfully!${CEND}    " &&
 	echo -e "-----------------------------------------------------------"
 }
-function AddSslVhost(){
+function AddSslVhost()
+{
     echo "--------------------------------------------------------------"
 	echo "           begin to install ssl virtual host                  "
     echo "--------------------------------------------------------------"
@@ -739,7 +795,8 @@ EOF
 	echo -e "   ${CSUCCESS}install ssl virtual host successfully!${CEND} " &&
 	echo -e "------------------------------------------------------------"
 }
-function AddGoogleReverse(){
+function AddGoogleReverse()
+{
 	echo "---------------------------------------------------------------"
 	echo "            begin to install google reverse proxy              "
     echo "---------------------------------------------------------------"
@@ -767,7 +824,8 @@ function AddGoogleReverse(){
 	echo -e "${CSUCCESS}install google reverse proxy successfully!${CEND} " &&
 	echo -e "-------------------------------------------------------------"
 }
-function AddDirectory(){
+function AddDirectory()
+{
 	echo "---------------------------------------------------------------"
 	echo "            begin to install file directory              "
     echo "---------------------------------------------------------------"
@@ -789,7 +847,8 @@ function AddDirectory(){
 	echo -e "${CSUCCESS}install file directory successfully!${CEND} " &&
 	echo -e "-------------------------------------------------------------"
 }
-function Init(){
+function Init()
+{
     echo -e "-------------------------------------------------------------"
 	echo -e "               begin to initialize system                    "
     echo -e "-------------------------------------------------------------"
@@ -815,7 +874,8 @@ function Init(){
 	echo -e "     ${CSUCCESS}initialize system successfully!${CEND}      " &&
 	echo -e "------------------------------------------------------------"
 }
-function InstallLnmp(){
+function InstallLnmp()
+{
     #init system
 	Init
 	
@@ -845,41 +905,43 @@ function InstallLnmp(){
 	echo "Start time: ${StartDate}";
 	echo "Completion time: $(date) (Use: $[($(date +%s)-StartDateSecond)/60] minute)";
 }
-function AddVirtualHost(){
+function AddVirtualHost()
+{
     while :
     do
-            echo
-            echo 'Please select host type:'
-            echo -e "\t${CMSG}1${CEND}. Install virtual host"
-            echo -e "\t${CMSG}2${CEND}. Install SSL virtual host"
-            echo -e "\t${CMSG}3${CEND}. Install google reverse proxy"
-			echo -e "\t${CMSG}4${CEND}. Install file directory"
-            read -p "Please input a number:(Default 1 press Enter) " host_type
-            [ -z "$host_type" ] && host_type=1
-            if [[ ! $host_type =~ ^[1-4]$ ]];then
-                echo "${CWARNING}input error! Please only input number 1,2,3,4${CEND}"
-            else
-                if [ "$host_type" == '1' ]
-				then
-					AddVhost
-				fi
-				if [ "$host_type" == '2' ]
-				then
-					AddSslVhost
-				fi
-				if [ "$host_type" == '3' ]
-				then
-					AddGoogleReverse
-			    fi
-				if [ "$host_type" == '4' ]
-				then
-					AddDirectory
-			    fi				
-				break
-            fi
+		echo
+		echo 'Please select host type:'
+		echo -e "\t${CMSG}1${CEND}. Install virtual host"
+		echo -e "\t${CMSG}2${CEND}. Install SSL virtual host"
+		echo -e "\t${CMSG}3${CEND}. Install google reverse proxy"
+		echo -e "\t${CMSG}4${CEND}. Install file directory"
+		read -p "Please input a number:(Default 1 press Enter) " host_type
+		[ -z "$host_type" ] && host_type=1
+		if [[ ! $host_type =~ ^[1-4]$ ]];then
+			echo "${CWARNING}input error! Please only input number 1,2,3,4${CEND}"
+		else
+			if [ "$host_type" == '1' ]
+			then
+				AddVhost
+			fi
+			if [ "$host_type" == '2' ]
+			then
+				AddSslVhost
+			fi
+			if [ "$host_type" == '3' ]
+			then
+				AddGoogleReverse
+			fi
+			if [ "$host_type" == '4' ]
+			then
+				AddDirectory
+			fi				
+			break
+		fi
     done
 }
-function DelVirtualHost(){
+function DelVirtualHost()
+{
     echo "--------------------------------------------------------------"
 	echo "                   begin to delete host                       "
     echo "--------------------------------------------------------------"
@@ -903,7 +965,8 @@ function DelVirtualHost(){
 	echo -e "    ${CSUCCESS}delete virtual host successfully!${CEND}     " &&
 	echo -e "------------------------------------------------------------"
 }
-function UninstallLnmp(){
+function UninstallLnmp()
+{
     echo "--------------------------------------------------------------"
 	echo "                   begin to uninstall lnmp                    "
     echo "--------------------------------------------------------------"
